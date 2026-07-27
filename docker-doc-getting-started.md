@@ -12,6 +12,8 @@
 - [Docker Concepts](#docker-concepts)
   - [The Basics](#the-basics)
     - [What is a Container?](#what-is-a-container)
+      - [Run Container using Docker Desktop](#method-1-to-run-a-container-docker-desktop-gui)
+      - [Run Container using CLI](#method-2-to-run-a-container-cli)
 
 # Get Docker - Install Docker Desktop on Windows (with wsl2 backend)
 
@@ -505,7 +507,7 @@ Quite often, you will see containers and VMs used together. As an example, in a 
 
 #### Method-1 to Run a Container: Docker Desktop GUI
 
-**Running Docker Container**
+**Pulling and Image and Running Docker Container**
 
 1. Open Docker Desktop and select the `Search` field on the top navigation bar.
 2. Specify `welcome-to-docker` in the search input and then select the `Pull` button.
@@ -545,4 +547,36 @@ The `docker/welcome-to-docker` container continues to run until you stop it.
 
 #### Method-2 to Run a Container: CLI
 
-TEST EDIT
+**Pulling and Image and Running Docker Container**
+
+Open your CLI terminal and start a container by using the `docker run` command:
+
+```bash
+$ docker run -d --name welcome-to-docker -p 8080:80 docker/welcome-to-docker
+```
+
+The command will pull the image `docker/welcome-to-docker` and run the container.
+The output from this command is the full container ID.
+
+**View your running containers**
+
+- You can verify if the container is up and running by using the `docker ps` command.
+
+> [!TIP]
+> To view all containers including running and stopped, run: `docker ps -a`
+
+**Access the frontend**
+
+For our container, the frontend is accessible on port `8080`.  
+To open the website, select the link in the Port(s) column of your container or visit `http://localhost:8080` in your browser.
+
+**Stop your container**
+
+The `docker/welcome-to-docker` container continues to run until you stop it.
+
+1. Run `docker ps` to get the ID of the container
+2. Provide the container ID or name to the `docker stop` command:
+
+```
+docker stop <container_id>
+```
