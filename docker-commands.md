@@ -21,3 +21,41 @@ Use the `docker push` command. Be sure to replace `DOCKER_USERNAME` with your us
 docker push DOCKER_USERNAME/getting-started-todo-app
 ```
 
+## Pull an Image and Run Docker Container
+
+```bash
+$ docker run -d --name CONTAINER_NAME -p 8080:80 IMAGE_NAME
+```
+
+- example image name: `docker/welcome-to-docker` (this should match the real image name stored in docker hub)
+- example container name: `welcome-to-docker` (arbitrary)
+- `-p` flag for port. `8080` is any available `host port` and `80` is a fixed `container port`
+
+## View your running containers
+
+- To see only the running containers
+
+```bash
+docker ps
+```
+
+- To see all containers including running and stopped
+
+```bash
+docker ps -a
+```
+
+> [!TIP]
+> To see formated output instead of table view:
+>
+> - install `jq` running `sudo apt install jq`
+> - run `docker ps --format json | jq '{ID, Names, Image, Ports, Status}'`
+
+## Stop your container
+
+1. Run `docker ps` to get the ID of the container
+2. Provide the container ID or name to the `docker stop` command:
+
+```
+docker stop <container_id>
+```
