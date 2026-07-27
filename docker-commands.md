@@ -16,6 +16,22 @@ docker build -t DOCKER_USERNAME/getting-started-todo-app .
 docker image ls
 ```
 
+## Tag a built Image
+
+Tag allows to label and version your image.
+
+1. You can tag during building an image
+
+```bash
+docker build -t DOCKER_USERNAME/docker-quickstart:1.0 .
+```
+
+2. Then you can tag the built image to mark that as different version
+
+```bash
+docker tag DOCKER_USERNAME/docker-quickstart:1.0 DOCKER_USERNAME/docker-quickstart:latest
+```
+
 ## Push the image to Docker Hub
 
 Use the `docker push` command. Be sure to replace `DOCKER_USERNAME` with your username:
