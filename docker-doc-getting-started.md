@@ -3,17 +3,24 @@
 - [Install Docker Desktop](#get-docker---install-docker-desktop-on-windows-with-wsl2-backend)
 - [Install Docker Engine on a vps hosting (ubuntu)](#install-docker-engine-on-a-vps-hosting-or-ubuntu-when-needed)
 - [What is Docker](#what-is-docker)
+
 - [Introduction](#introduction)
   - [Get Docker Desktop](#get-docker-desktop)
   - [Develop with containers](#develop-with-containers)
   - [Build and push your first image](#build-and-push-your-first-image)
     - [Method-1: CLI](#method-1-cli)
     - [Method-2: VSCode Extension](#method-2-vs-code-extension)
+
 - [Docker Concepts](#docker-concepts)
   - [The Basics](#the-basics)
     - [What is a Container?](#what-is-a-container)
       - [Run Container using Docker Desktop](#method-1-to-run-a-container-docker-desktop-gui)
       - [Run Container using CLI](#method-2-to-run-a-container-cli)
+
+    - [What is an Image?](#what-is-an-image)
+      - [Using Docker Desktop](#method-1-to-search-and-pull-a-container-image-docker-desktop)
+      - [Using CLI](#method-2-to-search-and-pull-a-container-image-cli)
+    - [What is a registry?](#what-is-a-registry)
 
 # Get Docker - Install Docker Desktop on Windows (with wsl2 backend)
 
@@ -447,9 +454,20 @@ docker build -t DOCKER_USERNAME/getting-started-todo-app .
 
 `the '-t' flag stands for tag, which allows us to build local repo with a name. The local repo name should match the repo created on docker hub`
 
-3. To verify the image exists locally, you can use the `docker image ls` command
+> [!NOTE]
+> Make sure you include the dot (.) at the end of the docker build command. This tells Docker where to find the Dockerfile.
 
-4. To push the image, use the `docker push` command. Be sure to replace `DOCKER_USERNAME` with your username:
+3. To verify the image exists locally, you can use either `docker image ls` or `docker images` command
+
+4. Start a container to test the image (replace DOCKER_USERNAME):
+
+```bash
+docker run -d -p 8080:80 DOCKER_USERNAME/getting-started-todo-app
+```
+
+Verify if the container is working by visiting http://localhost:8080/ with your browser.
+
+5. To push the image, use the `docker push` command. Be sure to replace `DOCKER_USERNAME` with your username:
 
 ```bash
 docker push DOCKER_USERNAME/getting-started-todo-app
@@ -657,3 +675,38 @@ docker pull docker/welcome-to-docker
 ```bash
 docker image history docker/welcome-to-docker
 ```
+
+### What is a registry
+
+#### Introduction
+
+Now, where do you store these images?
+
+Well, you can store your container images on your computer system, but what if you want to share them with your friends or use them on another machine? That's where the image registry comes in.
+
+`An image registry is a centralized location for storing and sharing your container images.` It can be either public or private. Docker Hub is a public registry that anyone can use and is the default registry.
+
+There are many other available container registries available today, including Amazon Elastic Container Registry (ECR), Azure Container Registry (ACR), and Google Container Registry (GCR). You can even run your private registry on your local system or inside your organization. For example, Harbor, JFrog Artifactory, GitLab Container registry etc.
+
+#### Registry vs. repository
+
+A `registry` is a centralized location that stores and manages container images, whereas a `repository` is a collection of related container images within a registry. Think of it as a folder where you organize your images based on projects.
+
+> [!TIP]
+> A Docker Personal plan gives you one private repository and unlimited public repositories.
+
+#### Build and Push a Docker image to a Docker Hub repository
+
+Follow [the steps](#build-and-push-your-first-image) mentioned above to build and push an image.
+
+This time try different project.
+
+- Create a public repo in docker hub named "docker-quickstart"
+- [Clone the project from this repo](https://github.com/dockersamples/helloworld-demo-node)
+- Before pushing docker image, you can use `docker tag` command to label and version your image. for example:
+
+```bash
+docker tag DOCKER_USERNAME/docker-quickstart DOCKER_USERNAME/docker-quickstart:1.0
+```
+
+- Finally push the image to the registry
