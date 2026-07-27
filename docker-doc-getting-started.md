@@ -580,3 +580,80 @@ The `docker/welcome-to-docker` container continues to run until you stop it.
 ```
 docker stop <container_id>
 ```
+
+### What is an image?
+
+#### Introduction
+
+Seeing as a container is an isolated process, where does it get its files and configuration?  
+How do you share those environments?
+
+That's where container images come in.  
+`A container image is a standardized package that includes all of the files, binaries, libraries, and configurations to run a container`.
+
+There are two important principles of images:
+
+1. Images are immutable. Once an image is created, it can't be modified. You can only make a new image or add changes on top of it.
+
+2. Container images are composed of layers. Each layer represents a set of file system changes that add, remove, or modify files.
+
+These two principles let you to extend or add to existing images. For example, if you are building a Python app, you can start from the Python image and add additional layers to install your app's dependencies and add your code.
+
+#### Finding images
+
+Docker Hub is the default global marketplace for storing and distributing images. You can search for `Docker Hub images` and run them directly from `Docker Desktop`.
+
+Docker Hub provides a variety of Docker-supported and endorsed images known as Docker Trusted Content. These provide fully managed services or great starters for your own images. These include:
+
+- `Docker Official Images` - a curated set of Docker repositories, serve as the starting point for the majority of users, and are some of the most secure on Docker Hub.
+- `Docker Hardened Images` - minimal, secure, production-ready images with near-zero CVEs, designed to reduce attack surface and simplify compliance. Free and open source under Apache 2.0
+- `Docker Verified Publishers` - high-quality images from commercial publishers verified by Docker
+- `Docker-Sponsored Open Source` - images published and maintained by open-source projects sponsored by Docker
+
+For example, `Redis` and `Memcached` are a few popular ready-to-go Docker Official Images. You can download these images and have these services up and running in a matter of seconds.
+
+There are also base images, like the `Node.js` Docker image, that you can use as a starting point and add your own files and configurations.
+
+For production workloads requiring enhanced security, Docker Hardened Images offer minimal variants of popular images like `Node.js`, `Python`, and `Go`.
+
+#### Method-1 to search and pull a container image: Docker Desktop
+
+**Search for and pull/download an image**
+
+1. Select the global search bar at the top of the screen.
+2. In the _Search_ field, enter "welcome-to-docker". Once the search has completed, select the `docker/welcome-to-docker` image. Select `Pull` to download the image
+
+**Learn about the image**
+
+1. In the Docker Desktop Dashboard, select the Images view.
+2. Select the `docker/welcome-to-docker` image to open details about the image.
+3. The image details page presents you with information regarding the `layers` of the image, the `packages` and libraries installed in the image, and any discovered `vulnerabilities`.
+
+#### Method-2 to search and pull a container image: CLI
+
+**Search for and pull/download an image**
+
+1. Open a terminal and run:
+
+```bash
+docker search docker/welcome-to-docker
+```
+
+2. Pull the image:
+
+```bash
+docker pull docker/welcome-to-docker
+```
+
+**Learn about the image**
+
+1. List your downloaded images using the `docker image ls` command.
+
+> [!NOTE]
+> The image size represented here reflects the uncompressed size of the image, not the download size of the layers.
+
+2. List the image's layers:
+
+```bash
+docker image history docker/welcome-to-docker
+```
