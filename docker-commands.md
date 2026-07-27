@@ -7,6 +7,9 @@
 docker build -t DOCKER_USERNAME/getting-started-todo-app .
 ```
 
+> [!NOTE]
+> Must have dockerfile
+
 ## Verify if the image exists locally
 
 ```bash
@@ -21,7 +24,31 @@ Use the `docker push` command. Be sure to replace `DOCKER_USERNAME` with your us
 docker push DOCKER_USERNAME/getting-started-todo-app
 ```
 
-## Pull an Image and Run Docker Container
+## Search container image
+
+```bash
+docker search <IMAGE_NAME>
+```
+
+> Example IMAGE_NAME: docker/welcome-to-docker
+
+## Pull container image
+
+```bash
+docker pull <IMAGE_NAME>
+```
+
+> Example IMAGE_NAME: docker/welcome-to-docker
+
+## List the image's layers:
+
+```bash
+docker image history <IMAGE_NAME>
+```
+
+> Example IMAGE_NAME: docker/welcome-to-docker
+
+## Pull an Image and Run Docker Container (together)
 
 ```bash
 $ docker run -d --name CONTAINER_NAME -p 8080:80 IMAGE_NAME
