@@ -710,3 +710,51 @@ docker tag DOCKER_USERNAME/docker-quickstart DOCKER_USERNAME/docker-quickstart:1
 ```
 
 - Finally push the image to the registry
+
+### What is Docker Compose?
+
+#### Introduction
+
+One best practice for containers is that each container should do one thing and do it well (with exceptions).
+
+You can use multiple `docker run` commands to start multiple containers. But, you'll soon realize you'll need to manage networks, all of the flags needed to connect containers to those networks, and more. And when you're done, cleanup is a little more complicated.
+
+With Docker Compose, you can define all of your containers and their configurations in a single YAML file. If you include this file in your code repository, anyone that clones your repository can get up and running with a single command `docker compose up`.
+
+#### Using Docker Compose
+
+We will use Docker Compose to run multi-container application which is a simple to-do list app built with Node.js and MySQL.
+
+**Start the application**
+
+1. Open Docker Desktop
+2. Open a terminal and clone this sample application:
+
+```bash
+git clone https://github.com/dockersamples/todo-list-app
+```
+
+3. Navigate into the todo-list-app directory:
+
+```bash
+cd todo-list-app
+```
+
+Inside this directory, you'll find a file named compose.yaml. It defines all the services that make up your application, along with their configurations.
+
+4. Use the `docker compose up` command to start the application:
+
+```bash
+docker compose up -d --build
+```
+
+When you run this command, you should see an output, where:
+
+- Two container images were downloaded from Docker Hub - node and MySQL
+- A network was created for your application
+- A volume was created to persist the database files between container restarts
+- Two containers were started with all of their necessary config
+
+5. With everything now up and running, you can open http://localhost:3000 in your browser to see the site. Note that the application may take 10-15 seconds to fully start.
+
+6. If you look at the Docker Desktop GUI, you can see the containers (you may expand to see all two containers)
