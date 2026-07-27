@@ -59,7 +59,7 @@ While docker desktop is an GUI interface for docker, you will need to install do
 sudo apt remove $(dpkg --get-selections docker.io docker-compose docker-compose-v2 docker-doc podman-docker containerd runc | cut -f1)
 ```
 
-> [!NOTE] 
+> [!NOTE]
 > Images, containers, volumes, and networks stored in /var/lib/docker/ `are not` automatically removed (will be preserved) when you uninstall Docker (running the above command).
 
 ### Clean start (if you don't want to keep previous data)
@@ -424,8 +424,8 @@ Now that you have a repository, you are ready to build and push your image.
 The image you are building extends the Node image, meaning you don't need to install or configure Node, yarn, etc. You can simply focus on what makes your application unique.
 
 > [!Note]
-> What is an image/Dockerfile? 
-> 
+> What is an image/Dockerfile?
+>
 > A Dockerfile is a text-based script that provides the instruction set on how to build the image. For this quick start, the repository already contains the Dockerfile.
 
 #### Method-1: CLI
@@ -544,3 +544,5 @@ The `docker/welcome-to-docker` container continues to run until you stop it.
 - Select the `Stop` action in the Actions column.
 
 #### Method-2 to Run a Container: CLI
+
+TEST EDIT
