@@ -102,3 +102,24 @@ docker ps -a
 ```
 docker stop <container_id>
 ```
+
+## Use docker compose to start an application
+
+```bash
+docker compose up -d --build
+```
+
+## Tear down Compose stack
+
+```bash
+docker compose down
+```
+
+> [!NOTE]
+>
+> By default, volumes aren't automatically removed when you tear down a Compose stack.
+> If you do want to remove the volumes, add the `--volumes` flag:
+>
+> ```bash
+> docker compose down --volumes
+> ```
