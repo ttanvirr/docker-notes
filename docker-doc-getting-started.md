@@ -755,6 +755,31 @@ When you run this command, you should see an output, where:
 - A volume was created to persist the database files between container restarts
 - Two containers were started with all of their necessary config
 
-5. With everything now up and running, you can open http://localhost:3000 in your browser to see the site. Note that the application may take 10-15 seconds to fully start.
+5. With everything now up and running, you can open http://localhost:3000 in your browser to see the site. Note that the application may take some time to fully start.
 
 6. If you look at the Docker Desktop GUI, you can see the containers (you may expand to see all two containers)
+
+**Tear it down**
+
+1. In the CLI, use the `docker compose down` command to remove everything:
+
+```bash
+docker compose down
+```
+
+> [!NOTE]
+> **Volume persistence**
+>
+> By default, volumes aren't automatically removed when you tear down a Compose stack.
+> If you do want to remove the volumes, add the `--volumes` flag:
+>
+> ```bash
+> docker compose down --volumes
+> ```
+
+2. Alternatively, you can use the Docker Desktop GUI to remove the containers by selecting the application stack and selecting the Delete button.
+
+> [!NOTE]
+> **Using the GUI for Compose stacks**
+>
+> if you remove the containers for a Compose app in the GUI, it's removing only the containers. You'll have to manually remove the network and volumes if you want to do so.
