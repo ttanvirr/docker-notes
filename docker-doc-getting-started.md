@@ -783,3 +783,544 @@ docker compose down
 > **Using the GUI for Compose stacks**
 >
 > if you remove the containers for a Compose app in the GUI, it's removing only the containers. You'll have to manually remove the network and volumes if you want to do so.
+
+## Building Images
+
+In this series, we'll learn how to build production-ready images that are lean and efficient Docker images, essential for minimizing overhead and enhancing deployment in production environments.
+
+**What you'll learn-**
+
+1. Understanding image layers
+2. Writing a Dockerfile
+3. Build, tag and publish an image
+4. Using the build cache
+5. Multi-stage builds
+
+### Understanding image layers
+
+#### Introduction
+
+Container images are composed of layers. And each of these layers, once created, are immutable (can't be modified).
+
+#### Image layers
+
+Each layer in an image contains a set of filesystem changes - additions, deletions, or modifications. Let’s look at a theoretical image:
+
+1. The first layer adds basic commands and a package manager, such as apt.
+2. The second layer installs a Python runtime and pip for dependency management.
+3. The third layer copies in an application’s specific requirements.txt file.
+4. The fourth layer installs that application’s specific dependencies.
+5. The fifth layer copies in the actual source code of the application.
+
+This is beneficial because it allows layers to be reused between images. For example, imagine you wanted to create another Python application. Due to layering, you can leverage the same Python base. This will make builds faster and reduce the amount of storage and bandwidth required to distribute the images. The image layering might look similar to the following:
+
+![two app sharing same image layer](images/image.png)
+
+#### Stacking the layers
+
+Layering is made possible by content-addressable storage and union filesystems. Here’s how it works:
+
+1. After each layer is downloaded, it is extracted into its own directory on the host filesystem.
+2. When you run a container from an image, a union filesystem is created where layers are stacked on top of each other, creating a new and unified view.
+3. When the container starts, its root directory is set to the location of this unified directory, using `chroot`.
+
+When the union filesystem is created, in addition to the image layers, a directory is created specifically for the running container. This enables you to run multiple containers from the same underlying image.
+
+#### Create new image layers
+
+In this hands-on guide, you will create new image layers manually using the `docker container commit` command.
+
+> [!NOTE]
+> Note that you’ll rarely create images this way, as you’ll normally use a `Dockerfile`. But this will help understand the concept.
+
+##### (A) Create a base image
+
+1. Download and install Docker Desktop (if not). Open/run it.
+2. In a terminal, run the following command to start a new container:
+
+```bash
+$ docker run --name=base-container -ti ubuntu
+```
+
+Once the image has been downloaded and the container has started, you should see a new shell prompt (because of `-ti` flag).
+
+This is running inside your container.
+
+It will look similar to the following (the container ID will vary):
+
+```shell
+root@d8c5ca119fcd:/#
+```
+
+3. Inside the container, run the following command to install Node.js:
+
+```shell
+$ apt update && apt install -y nodejs
+```
+
+When this command runs, it downloads and installs Node inside the container. In the context of the union filesystem, these filesystem changes occur within the directory unique to this container.
+
+4. Validate if Node is installed:
+
+```shell
+$ node -e 'console.log("Hello world!")'
+```
+
+5. Now you’re ready to save the changes as a new image layer, from which you can start new containers or build new images. To do so, you will use the `docker container commit` command **in a new terminal**:
+
+```bash
+$ docker container commit -m "Add node" base-container node-base
+```
+
+6. View the layers of your image using the docker image history command:
+
+```bash
+$ docker image history node-base
+```
+
+7. To prove your image has Node installed, you can start a new container using this new image:
+
+```bash
+$ docker run node-base node -e "console.log('Hello again')"
+```
+
+With that, you should get a “Hello again” output in the terminal, showing Node was installed and working.
+
+8. Now that you’re done creating your base image, you can remove that container:
+
+```bash
+$ docker rm -f base-container
+```
+
+> [!NOTE]
+> A **base image** is a foundation for building other images. It's possible to use any images as a base image.
+
+##### (B) Build an app image
+
+Now that you have a base image, you can extend that image to build additional images.
+
+1. Start a new container using the newly created node-base image:
+
+```bash
+docker run --name=app-container -ti node-base
+```
+
+2. Inside of this container (in the shell), run the following command to create a Node program:
+
+```shell
+$ echo 'console.log("Hello from an app")' > app.js
+```
+
+To run this Node program, you can use the following command and see the message printed on the screen:
+
+```shell
+node app.js
+```
+
+3. In another terminal, run the following command to save this container’s changes as a new image:
+
+```bash
+$ docker container commit -c "CMD node app.js" -m "Add app" app-container sample-app
+```
+
+This command creates a new image named sample-app, adds additional configuration to the image to set the default command when starting a container. In this case, you are setting it to automatically run node app.js.
+
+4. In a terminal outside of the container, run the following command to view the updated layers:
+
+```bash
+$ docker image history sample-app
+```
+
+You’ll then see output. Note the top layer comment has “Add app” and the next layer has “Add node”
+
+5. Finally, start a new container using the brand new image. Since you specified the default command, you can use the following command:
+
+```bash
+docker run sample-app
+```
+
+You should see your greeting appear in the terminal, coming from your Node program.
+
+6. Now you can remove your containers:
+
+```bash
+$ docker rm -f app-container
+```
+
+### Writing a Dockerfile
+
+#### Introduction
+
+A Dockerfile is a text-based document that's used to create a container image. It provides instructions to the image builder on the commands to run, files to copy, startup command, and more.
+
+As an example, the following Dockerfile would produce a ready-to-run Python application:
+
+```dockerfile
+FROM python:3.13-alpine
+WORKDIR /app
+
+# Install the application dependencies
+COPY requirements.txt ./
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Copy in the source code
+COPY src ./src
+EXPOSE 8080
+
+# Setup an `app` user (convension; not related to workdir) so the container doesn't run as the `root` user
+RUN useradd app
+USER app
+
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8080"]
+```
+
+#### Common Instructions in a Dockerfile
+
+- `FROM <image>` - specifies the base image that the build will extend.
+- `WORKDIR <path>` - specifies the "working directory" or the path in the image where files will be copied and commands will be executed (in container).
+- `COPY <host-path> <image-path>` - instruct to copy files from the host and put them into the container image.
+- `RUN <command>` - this instruction tells the builder to run the specified command.
+- `ENV <name> <value>` - this instruction sets an environment variable that a running container will use.
+- `EXPOSE <port-number>` - a port the image would like to expose.
+- `USER <user-or-uid>` - sets the default user for all subsequent instructions. User is usally set to 'app'. This 'app' isn't related to workdir
+- `CMD ["<command>", "<arg1>", "<arg2>"]` - sets the default command a container using this image will run.
+
+[See Dockerfile Reference](https://docs.docker.com/reference/dockerfile) to learn more about dockerfile instructions.
+
+So, a Dockerfile typically follows these steps:
+
+- Determine your base image
+- Install application dependencies
+- Copy in any relevant source code and/or binaries
+- Configure the final image
+
+tip: use a specific alpine version, like, node:24-alpine, instead of generic version, like, node:lts-alpine
+
+#### Write a Dockerfile to build a Node.js app
+
+##### (A) Set up
+
+- Clone the https://github.com/docker/getting-started-todo-app project
+- Checkout the `build-image-from-scratch` branch.
+
+##### (B) Creating the Dockerfile
+
+Now that you have the project, you’re ready to create the Dockerfile.
+
+1. Download and install Docker Desktop (if already didn't). Open/run it.
+2. Examine the project.
+
+Explore the contents of `getting-started-todo-app/app/`. You'll notice that a `Dockerfile` already exists. It is a simple text file that you can open in any text or code editor.
+
+3. Delete the existing `Dockerfile` as you're starting from scratch and will create a new Dockerfile.
+4. Create a file named `Dockerfile` in the `getting-started-todo-app/app/` folder.
+
+> [!NOTE]
+> **Dockerfile file has no extensions**
+
+> Here the host-directory is the `/app` directory where the `Dockerfile` exits.
+
+5. In the Dockerfile, define your base image by adding the following line:
+
+```Dockerfile
+FROM node:22-alpine
+```
+
+> Always use specific version
+
+6. Now, define the working directory. This will specify where future commands will run and the directory files will be copied inside the container image.
+
+```Dockerfile
+WORKDIR /app
+```
+
+> the convension is using `/app` as working directory
+
+7. Copy all of the files from your project (from project root) on your machine into the container image (into /app dir):
+
+```Dockerfile
+COPY . .
+```
+
+8. Install the app's dependencies by using the `yarn` CLI and package manager.
+
+```Dockerfile
+RUN yarn install --production
+```
+
+> [!TIP]
+> This app uses yarn package manager. Note in the `/app` dir in your project, there is a `yarn.lock` file.
+
+9. Finally, specify the default command to run:
+
+```Dockerfile
+CMD ["node", "./src/index.js"]
+```
+
+> this will run as `node ./src/index.js`
+
+And with that, you should have the following Dockerfile:
+
+```Dockerfile
+FROM node:22-alpine
+WORKDIR /app
+COPY . .
+RUN yarn install --production
+CMD ["node", "./src/index.js"]
+```
+
+DONE!
+
+> [!NOTE]
+> **This Dockerfile isn't production-ready yet**
+>
+> This `Dockerfile` is not following all of the best practices yet. It will build the app, but the builds won't be as fast, or the images as secure, as they could be.
+
+### Build, tag, and publish an image
+
+#### Explanation
+
+In this guide, you will learn the following:
+
+- `Building images` - the process of building an image based on a Dockerfile
+- `Tagging images` - the process of giving an image a name, which also determines where the image can be distributed
+- `Publishing images` - the process to distribute or share the newly created image using a container registry (e.g., Docker Hub)
+
+##### (A) Building Images
+
+Most often, images are built using a `Dockerfile`.
+
+Navigate to `/app` dir where `Dockerfile` exists
+
+The most basic docker build command might look like the following :
+
+```bash
+docker build .
+```
+
+The final `.` in the command provides the path or URL to the build context. At this location, the builder will find the `Dockerfile` and other referenced files.
+
+When you run a build, the builder pulls the base image, if needed, and then runs the instructions specified in the Dockerfile.
+
+With the previous command, the image will have no name, but the output will provide the ID of the image.
+
+With the previous output, you could start a container by using the referenced image:
+
+```bash
+docker run sha256:<image_id>
+```
+
+That name certainly isn't memorable, which is where `tagging` becomes useful.
+
+##### (B) Tagging Images
+
+Tagging images is the method to provide an image with a memorable name. A full image name has the following structure:
+
+> [HOST[:PORT_NUMBER]/]PATH[:TAG]
+
+- `HOST`: The optional registry hostname where the image is located. If no host is specified, Docker's public registry at _docker.io_ is used by default.
+
+- `PORT_NUMBER`: The registry port number if a hostname is provided.
+
+- `PATH`: The path of the image, consisting of slash-separated components. For Docker Hub, the format follows `[NAMESPACE/]REPOSITORY`, where namespace is either a user's or organization's name. If no namespace is specified, `library` is used, which is the namespace for Docker Official Images.
+
+- `TAG`: A custom, human-readable identifier that's typically used to identify different versions or variants of an image. If no tag is specified, `latest` is used by default.
+
+**Some examples of image names include:**
+
+- `nginx`, equivalent to `docker.io/library/nginx:latest`: this pulls an image from the `docker.io` registry, the `library` namespace, the `nginx` image repository, and the `latest` tag.
+
+- `docker/welcome-to-docker`, equivalent to `docker.io/docker/welcome-to-docker:latest`: this pulls an image from the `docker.io` registry, the `docker` namespace, the `welcome-to-docker` image repository, and the `latest` tag.
+
+- `ghcr.io/dockersamples/example-voting-app-vote:pr-311`: this pulls an image from the `GitHub Container Registry`, the `dockersamples` namespace, the `example-voting-app-vote` image repository, and the `pr-311` tag.
+
+To tag an image during a build, add the `-t` or `--tag` flag:
+
+```bash
+docker build -t <my-username>/<my-image> .
+```
+
+If you've already built an image, you can add another tag to the image by using the `docker image tag` command:
+
+```bash
+docker image tag <my-username>/<my-image> <another-username>/<another-image>:v1
+```
+
+> the value of `another-username` and `another-image` could be same as `my-username` and `my-image`
+
+##### (C) Publishing images
+
+Once you have an image built and tagged, you're ready to push it to a registry. To do so, use the `docker push` command:
+
+```bash
+docker push <my-username>/<my-image>
+```
+
+Within a few seconds, all of the layers for your image will be pushed to the registry.
+
+> **Requiring authentication**
+>
+> Before you're able to push an image to a repository, you will need to be authenticated. To do so, simply use the `docker login` command.
+
+#### Try it out
+
+In this hands-on guide, you will build a simple image using a provided `Dockerfile` and push it to `Docker Hub`
+
+##### (A) Set up
+
+1. **Get the sample application**
+
+   Clone the repository from https://github.com/docker/getting-started-todo-app
+
+2. Open and Sign-in to `Docker Desktop` and `Docker Hub`.
+
+##### (B) Build an image
+
+1. Using a terminal in the root of the sample app repository, run the following command. Replace `YOUR_DOCKER_USERNAME` with your Docker Hub username:
+
+```bash
+docker build -t YOUR_DOCKER_USERNAME/concepts-build-image-demo .
+```
+
+2. Once the build has completed, you can view the image by using the following command:
+
+```bash
+$ docker image ls
+```
+
+3. You can actually view the history (or how the image was created with layers) by using the `docker image history` command:
+
+```bash
+$ docker image history YOUR_DOCKER_USERNAME/concepts-build-image-demo
+```
+
+##### (C) Push the image
+
+Now that you have an image built, it's time to push the image to a registry.
+
+1. Push the image using the `docker push` command:
+
+```bash
+$ docker push YOUR_DOCKER_USERNAME/concepts-build-image-demo
+```
+
+If you receive a `requested access to the resource is denied`, make sure you are both logged in and that your Docker username is correct in the image tag.
+
+After a moment, your image should be pushed to Docker Hub. If a repo with that name already created the image will be pushed to that repo otherwise the repo will be automatically created.
+
+### Using the build cache
+
+#### Explanation
+
+Consider the following `Dockerfile` that you created for the `getting-started-todo-app` app.
+
+```Dockerfile
+FROM node:22-alpine
+WORKDIR /app
+COPY . .
+RUN yarn install --production
+CMD ["node", "./src/index.js"]
+```
+
+When you run the docker build command to create a new image, Docker executes each instruction in your Dockerfile, creating a layer for each command and in the order specified. For each instruction, Docker checks whether it can reuse the instruction from a previous build. If it finds that you've already executed a similar instruction before, Docker doesn't need to redo it. Instead, it’ll use the cached result. This way, your build process becomes faster and more efficient.
+
+In order to maximize cache usage and avoid resource-intensive and time-consuming rebuilds, it's important to understand how cache invalidation works. Here are a few examples of situations that can cause cache to be invalidated:
+
+- Any changes to the command of a `RUN` instruction invalidates that layer.
+
+- Any changes to files copied into the image with the `COPY` or `ADD` instructions. Whether it's a change in content or properties like permissions, Docker considers these modifications as triggers to invalidate the cache.
+
+- If any previous layer, including the base image or intermediary layers, has been invalidated due to changes, Docker ensures that subsequent layers relying on it are also invalidated. This keeps the build process synchronized and prevents inconsistencies.
+
+When you're writing or editing a Dockerfile, keep an eye out for unnecessary cache misses to ensure that builds run as fast and efficiently as possible.
+
+#### Try it out
+
+In this hands-on guide, you will learn how to use the `Docker build cache` effectively for a Node.js application.
+
+##### Build the application
+
+1. Download and install Docker Desktop.
+2. Open a terminal and clone this sample application: https://github.com/dockersamples/todo-list-app
+3. Navigate into the todo-list-app directory
+
+Inside this directory, you'll find a file named `Dockerfile` with the following content:
+
+```Dockerfile
+FROM node:22-alpine
+WORKDIR /app
+COPY . .
+RUN yarn install --production
+EXPOSE 3000
+CMD ["node", "./src/index.js"]
+
+```
+
+4. Build the Docker image:
+
+```bash
+$ docker build .
+```
+
+Here’s the result of the build process:
+
+```bash
+[+] Building 20.0s (10/10) FINISHED
+```
+
+The first line indicates that the entire build process took 20.0 seconds (time may differ). The first build may take some time as it installs dependencies.
+
+5. Now, re-run the `docker build .` command without making any change in the source code or Dockerfile.
+
+Subsequent builds after the initial are faster due to the caching mechanism, as long as the commands and context remain unchanged. Docker caches the intermediate layers generated during the build process. Docker can reuse the cached layers, significantly speeding up the build process. The subsequent build was completed in just 1.0 second (time may vary). No need to repeat time-consuming steps like installing dependencies.
+
+Going back to the `docker image history` output, you see that each command in the Dockerfile becomes a new layer in the image.
+
+You might remember that when you made a change to the image, the `yarn` dependencies had to be reinstalled. It doesn't make much sense to reinstall the same dependencies every time you build, right?
+
+To fix this, restructure your `Dockerfile` so that the dependency cache remains valid unless it really needs to be invalidated. For Node-based applications, dependencies are defined in the `package.json` file. You'll want to reinstall the dependencies if that file changes, but use cached dependencies if the file is unchanged. So, start by copying only that file first, then install the dependencies, and finally copy everything else. Then, you only need to recreate the yarn dependencies if there was a change to the package.json file.
+
+6. Update the `Dockerfile` to copy in the `package.json` file first, install dependencies, and then copy everything else in.
+
+```Dockerfile
+FROM node:22-alpine
+WORKDIR /app
+# copy two files in working dir
+COPY package.json yarn.lock ./
+RUN yarn install --production
+COPY . .
+EXPOSE 3000
+CMD ["node", "src/index.js"]
+```
+
+7. Create a file named `.dockerignore` in the same folder as the `Dockerfile` with the following contents.
+
+```
+node_modules
+```
+
+> the image already have node_modules by running yarn install. So ignore unnecessary copying.
+
+8. Build the new image:
+
+```bash
+$ docker build .
+```
+
+You'll see that all layers were rebuilt. Perfectly fine since you changed the Dockerfile quite a bit.
+
+9. Now, make a change to the `src/static/index.html` file (like change the title to say "The Awesome Todo App").
+
+10. Build the Docker image.
+
+```bash
+$ docker build -t node-app:3.0 .
+```
+
+This time, your output should look a little different.
+
+First off, the build was much faster. You'll see that several steps are using previously cached layers. Pushing and pulling this image and updates to it will be much faster as well.
+
+By following these optimization techniques, you can make your Docker builds faster and more efficient, leading to quicker iteration cycles and improved development productivity.
+
+### Multi-stage builds
