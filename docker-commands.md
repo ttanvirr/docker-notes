@@ -67,7 +67,7 @@ docker image history <IMAGE_NAME>
 ## Pull an Image and Run Docker Container (together)
 
 ```bash
-$ docker run -d --name CONTAINER_NAME -p 8080:80 IMAGE_NAME
+$ docker run -d --name=CONTAINER_NAME -p 8080:80 IMAGE_NAME
 ```
 
 - example image name: `docker/welcome-to-docker` (this should match the real image name stored in docker hub)
@@ -101,6 +101,12 @@ docker ps -a
 
 ```
 docker stop <container_id>
+```
+
+## Delete a container
+
+```
+docker rm -f <container_id_or_name>
 ```
 
 ## Use docker compose to start an application
