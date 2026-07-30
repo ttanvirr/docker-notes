@@ -1709,3 +1709,193 @@ The `ports` configuration accepts a few different forms of syntax for the port d
 > **Dockerfile vs Docker compose**
 >
 > While `Dockerfile` builds an image, Docker `compose` can either build an image from Dockerfile and run the container or pull an existing image and run the container. In the above example, compose pulled and existing image and ran container
+
+### Overriding container defaults
+
+#### Intro
+
+<hr style="height:1px; margin-top:0">
+
+When a Docker container starts, it executes an application or command. The container gets this executable (script or file) from its image’s configuration. Containers come with default settings that usually work well, but you can change them if needed. These adjustments help the container's program run exactly how you want it to.
+
+The docker run command offers a powerful way to override these defaults and tailor the container's behavior to your liking.
+
+#### Overriding the network ports
+
+<hr style="height:1px; margin-top:0">
+
+Sometimes you might want to use separate database instances for development and testing purposes. Running these database instances on the same port might conflict. You can use the `-p` option in `docker run` to map container ports to host ports, allowing you to run the multiple instances of the container without any conflict.
+
+```bash
+$ docker run -d -p HOST_PORT:CONTAINER_PORT postgres
+```
+
+#### Setting environment variables
+
+<hr style="height:1px; margin-top:0">
+
+This option sets an environment variable `foo` inside the container with the value `bar`.
+
+```bash
+$ docker run -e foo=bar postgres env
+```
+
+You will see output like the following:
+
+```
+HOSTNAME=2042f2e6ebe4
+foo=bar
+```
+
+> [!TIP]
+> The `.env` file acts as a convenient way to set environment variables for your Docker containers without cluttering your command line with numerous `-e` flags. To use a `.env` file, you can pass `--env-file` option with the `docker run` command.
+>
+> ```bash
+> $ docker run --env-file .env postgres env
+> ```
+
+#### Restricting the container to consume the resources
+
+<hr style="height:1px; margin-top:0">
+
+You can use the `--memory` and `--cpus` flags with the `docker run` command to restrict how much memory and CPU a container can use.
+
+For example, you can set a memory limit for the Python API container:
+
+```bash
+$ docker run -e POSTGRES_PASSWORD=secret --memory="512m" --cpus="0.5" postgres
+```
+
+This command limits container memory usage to 512 MB and defines the CPU quota of 0.5 for half a core.
+
+> [!TIP]
+> **Monitor the real-time resource usage**
+>
+> You can use the `docker stats` command to monitor the real-time resource usage of running containers.
+
+#### Try it out
+
+<hr style="height:1px; margin-top:0">
+
+In this hands-on guide, you'll see how to use the `docker run` command to override the container defaults.
+
+##### (A) Run multiple instances of the Postgres database
+
+1. Start a container using the Postgres image:
+
+```bash
+$ docker run -d -e POSTGRES_PASSWORD=secret -p 5432:5432 postgres
+```
+
+This will start the Postgres database in the background, listening on the standard container port `5432` and mapped to port `5432` on the host machine.
+
+2. Start a second Postgres container mapped to a different port.
+
+```bash
+$ docker run -d -e POSTGRES_PASSWORD=secret -p 5433:5432 postgres
+```
+
+This will start another Postgres container in the background, listening on the standard postgres port `5432` in the container, but mapped to port `5433` on the host machine. You override the host port just to ensure that this new container doesn't conflict with the existing running container.
+
+3. Verify that both containers are running by going to the Containers view in the Docker Desktop Dashboard.
+
+##### (B) Run Postgres container in a controlled network
+
+By default, containers automatically connect to a special network called a `bridge network` when you run them. This bridge network acts like a virtual bridge, allowing containers on the same host to communicate with each other while keeping them isolated from the outside world and other hosts. However, for specific scenarios, you might want more control over the network configuration.
+
+Here's where the custom network comes in. You create a custom network by passing `--network` flag with the `docker run` command. All containers without a `--network` flag are attached to the default bridge network.
+
+Follow the steps to see how to connect a Postgres container to a custom network.
+
+1. Create a new custom network:
+
+```bash
+$ docker network create mynetwork
+```
+
+2. Verify the network:
+
+```bash
+$ docker network ls
+```
+
+This command lists all networks, including the newly created "mynetwork".
+
+3. Connect Postgres to the custom network:
+
+```bash
+$ docker run -d -e POSTGRES_PASSWORD=secret -p 5434:5432 --network mynetwork postgres
+```
+
+This will start Postgres container in the background, mapped to the host port `5434` and attached to the `mynetwork` network.
+
+We connected the container to custom Docker network for better isolation and communication with other containers.
+
+4. You can use `docker network inspect mynetwork` command to see if the container is tied to this new bridge network.
+
+> **Key difference between default bridge and custom networks**
+>
+> A. `DNS resolution`: By default, containers connected to the default bridge network can communicate with each other, but only by IP address. (unless you use `--link` option which is considered legacy). It is not recommended for production use. On a custom network, containers can resolve each other by name or alias.
+>
+> B. `Isolation`: All containers without a `--network` specified are attached to the default bridge network, hence can be a risk, as unrelated containers are then able to communicate. Using a custom network provides a scoped network in which only containers attached to that network are able to communicate, hence providing better isolation.
+
+##### (C) Manage the resources
+
+By default, containers are not limited in their resource usage. However, on shared systems, it's crucial to manage resources effectively. It's important not to let a running container consume too much of the host machine's memory.
+
+The `docker run` command offers flags like `--memory` and `--cpus` to restrict how much CPU and memory a container can use.
+
+```bash
+$ docker run -d -e POSTGRES_PASSWORD=secret --memory="512m" --cpus=".5" postgres
+```
+
+The `--cpus` flag specifies the CPU quota for the container. Here, it's set to half a CPU core (0.5) whereas the `--memory` flag specifies the memory limit for the container. In this case, it's set to 512 MB.
+
+> You can see a container's memory and cpu allocation and usage using Docker desktop.
+
+##### (D) Override the default CMD and ENTRYPOINT in Docker Compose
+
+Sometimes, you might need to override the default commands (`CMD`) or entry points (`ENTRYPOINT`) defined in a Docker image, especially when using Docker Compose.
+
+1. Create a directory and within the directory create a `compose.yml` file with the following content:
+
+```yml
+services:
+  postgres:
+    image: postgres:18
+    entrypoint: ["docker-entrypoint.sh", "postgres"]
+    command: ["-h", "localhost", "-p", "5432"]
+    environment:
+      POSTGRES_PASSWORD: secret
+```
+
+2. Start the Postgres service:
+
+```bash
+$ docker compose up -d
+```
+
+3. Verify the authentication:
+
+Open the Docker Desktop Dashboard, select the **Postgres** container and select **Exec** to enter into the container shell.
+
+Type the following command to connect to the Postgres database:
+
+```psql
+# psql -U postgres
+```
+
+![container exec](images/container-exec-1.png)
+
+> [!NOTE]
+> The PostgreSQL image sets up trust authentication locally so you may notice a password isn't required when connecting from localhost (inside the same container). However, a password will be required if connecting from a different host/container.
+
+##### (E) Override the default CMD and ENTRYPOINT with docker run
+
+You can also override defaults directly using the `docker run` command:
+
+```bash
+$ docker run -e POSTGRES_PASSWORD=secret postgres docker-entrypoint.sh -h localhost -p 5432
+```
+
+This command runs a Postgres container, sets an environment variable for password authentication, overrides the default startup commands and configures hostname and port mapping.
