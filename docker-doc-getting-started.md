@@ -798,6 +798,8 @@ In this series, we'll learn how to build production-ready images that are lean a
 
 ### Understanding image layers
 
+<hr style="height:1px;margin:0">
+
 #### Introduction
 
 Container images are composed of layers. And each of these layers, once created, are immutable (can't be modified).
@@ -949,6 +951,8 @@ $ docker rm -f app-container
 
 ### Writing a Dockerfile
 
+<hr style="height:1px;margin:0">
+
 #### Introduction
 
 A Dockerfile is a text-based document that's used to create a container image. It provides instructions to the image builder on the commands to run, files to copy, startup command, and more.
@@ -1077,6 +1081,8 @@ DONE!
 > This `Dockerfile` is not following all of the best practices yet. It will build the app, but the builds won't be as fast, or the images as secure, as they could be.
 
 ### Build, tag, and publish an image
+
+<hr style="height:1px;margin:0">
 
 #### Explanation
 
@@ -1210,6 +1216,8 @@ After a moment, your image should be pushed to Docker Hub. If a repo with that n
 
 ### Using the build cache
 
+<hr style="height:1px;margin:0">
+
 #### Explanation
 
 Consider the following `Dockerfile` that you created for the `getting-started-todo-app` app.
@@ -1324,3 +1332,380 @@ First off, the build was much faster. You'll see that several steps are using pr
 By following these optimization techniques, you can make your Docker builds faster and more efficient, leading to quicker iteration cycles and improved development productivity.
 
 ### Multi-stage builds
+
+<hr style="height:1px;margin:0">
+
+#### Explanation
+
+In a traditional build, all build instructions are executed in sequence, and in a single build container: downloading dependencies, compiling code, and packaging the application. All those layers end up in your final image. This approach works, but it leads to bulky images carrying unnecessary weight and increasing your security risks. This is where multi-stage builds come in.
+
+Multi-stage builds introduce multiple stages in your Dockerfile, each with a specific purpose. By separating the build environment from the final runtime environment, you can significantly reduce the image size and attack surface.
+
+Multi-stage builds are recommended for all types of applications.
+
+- For interpreted languages, like `JavaScript` or `Ruby` or `Python`, you can build and minify your code in one stage, and copy the production-ready files to a smaller runtime image. This optimizes your image for deployment.
+
+- For compiled languages, like `C` or `Go` or `Rust`, multi-stage builds let you compile in one stage and copy the compiled binaries into a final runtime image. No need to bundle the entire compiler in your final image.
+
+Here's a simplified example of a multi-stage build structure using pseudo-code. Notice there are multiple `FROM` statements and a new `AS <stage-name>`. In addition, the `COPY` statement in the second stage is copying `--from` the previous stage:
+
+```Dockerfile
+# Stage 1: Build Environment
+FROM builder-image AS build-stage
+# Install build tools (e.g., Maven, Gradle)
+# Copy source code
+# Build commands (e.g., compile, package)
+
+# Stage 2: Runtime environment
+FROM runtime-image AS final-stage
+#  Copy application artifacts from the build stage (e.g., JAR file)
+COPY --from=build-stage /path/in/build/stage /path/to/place/in/final/stage
+# Define runtime configuration (e.g., CMD, ENTRYPOINT)
+```
+
+This Dockerfile uses two stages:
+
+- The build stage uses a base image containing build tools needed to compile your application. It includes commands to install build tools, copy source code, and execute build commands.
+- The final stage uses a smaller base image suitable for running your application. It copies the compiled artifacts (a JAR file, for example) from the build stage. Finally, it defines the runtime configuration (using `CMD` or `ENTRYPOINT`) for starting your application.
+
+#### Try it out
+
+In this hands-on guide, you'll unlock the power of multi-stage builds to create lean and efficient Docker images for a sample Java application. You'll use a simple “Hello World” Spring Boot-based application built with Maven as your example.
+
+1. Download and install Docker Desktop.
+
+2. Open this [pre-initialized project](https://tinyurl.com/4khcxu6p) to generate a ZIP file.
+   `Spring Initializr` is a quickstart generator for Spring projects.
+
+Select **Generate** to create and download the zip file for this project.
+
+For this demonstration, you’ve paired Maven build automation with Java, a Spring Web dependency, and Java 21 for your metadata.
+
+3. Navigate the project directory. Once you unzip the file, you'll see the following project directory structure:
+
+```
+spring-boot-docker
+├── HELP.md
+├── mvnw
+├── mvnw.cmd
+├── pom.xml
+└── src
+    ├── main
+    │   ├── java
+    │   │   └── com
+    │   │       └── example
+    │   │           └── spring_boot_docker
+    │   │               └── SpringBootDockerApplication.java
+    │   └── resources
+    │       ├── application.properties
+    │       ├── static
+    │       └── templates
+    └── test
+        └── java
+            └── com
+                └── example
+                    └── spring_boot_docker
+                        └── SpringBootDockerApplicationTests.java
+
+15 directories, 7 files
+```
+
+The `src/main/java` directory contains your project's source code, the `src/test/java` directory contains the test source, and the `pom.xml` file is your project’s Project Object Model (POM).
+
+The `pom.xml` file is the core of a Maven project's configuration.
+
+You don't yet need to understand every intricacy to use it effectively.
+
+4. Create a RESTful web service that displays "Hello World!".
+
+   Under the `src/main/java/com/example/spring_boot_docker/` directory, you can modify your `SpringBootDockerApplication.java` file with the following content:
+
+```java
+package com.example.spring_boot_docker;
+
+import org.springframework.boot.SpringApplication;
+import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
+
+
+@RestController
+@SpringBootApplication
+public class SpringBootDockerApplication {
+
+    @RequestMapping("/")
+        public String home() {
+        return "Hello World";
+    }
+
+	public static void main(String[] args) {
+		SpringApplication.run(SpringBootDockerApplication.class, args);
+	}
+
+}
+```
+
+This Java file creates a simple Spring Boot web application that responds with "Hello World" when a user visits its homepage.
+
+##### Create the Dockerfile
+
+1. Create a file named `Dockerfile` in the same folder that contains all the other folders and files (like src, pom.xml, etc.).
+
+2. In the `Dockerfile`, define your base image by adding the following line:
+
+```Dockerfile
+FROM eclipse-temurin:21.0.8_9-jdk-jammy
+```
+
+3. Now, define the working directory by using the `WORKDIR` instruction. This will specify where future commands will run and the directory files will be copied inside the container image.
+
+```Dockerfile
+WORKDIR /app
+```
+
+4. Copy both the Maven wrapper script and your project's `pom.xml` file into the current working directory `/app` within the Docker container.
+
+```Dockerfile
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+```
+
+5. Execute a command within the container. It runs the `./mvnw dependency:go-offline` command, which uses the Maven wrapper (`./mvnw`) to download all dependencies for your project without building the final JAR file (useful for faster builds).
+
+```Dockerfile
+RUN ./mvnw dependency:go-offline
+```
+
+6. Copy the `src` directory from your project on the host machine to the `/app` directory within the container.
+
+```Dockerfile
+COPY src ./src
+```
+
+7. Set the default command to be executed when the container starts. This command instructs the container to run the Maven wrapper (`./mvnw`) with the `spring-boot:run` goal, which will build and execute your Spring Boot application.
+
+```Dockerfile
+CMD ["./mvnw", "spring-boot:run"]
+```
+
+And with that, you should have the following Dockerfile:
+
+```Dockerfile
+FROM eclipse-temurin:21.0.8_9-jdk-jammy
+WORKDIR /app
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline
+COPY src ./src
+CMD ["./mvnw", "spring-boot:run"]
+```
+
+##### Build the container image
+
+Execute the following command to build the Docker image:
+
+```bash
+$ docker build -t spring-helloworld .
+```
+
+> [!NOTE]
+> If you get
+>
+> ```
+> RUN ./mvnw dependency:go-offline:
+> 0.266 /bin/sh: 1: ./mvnw: Permission denied
+> ```
+>
+> Run `chmod +x mvnw` and build again
+
+2. Check the size of the Docker image:
+
+```bash
+$ docker images
+```
+
+It contains the full JDK, Maven toolchain, and more. In production, you don’t need that in your final image.
+
+##### Run the Spring Boot application
+
+1. Now that you have an image built, it's time to run the container.
+
+```bash
+$ docker run --name spring-helloworld-container -p 8080:8080 spring-helloworld
+```
+
+2. Access your “Hello World” page through your web browser at http://localhost:8080, or via this curl command:
+
+```bash
+$ curl localhost:8080
+Hello World
+```
+
+##### Use multi-stage builds
+
+1. Consider the following Dockerfile:
+
+```Dockerfile
+FROM eclipse-temurin:21.0.8_9-jdk-jammy AS builder
+WORKDIR /opt/app
+COPY .mvn/ .mvn
+COPY mvnw pom.xml ./
+RUN ./mvnw dependency:go-offline
+COPY ./src ./src
+RUN ./mvnw clean install
+
+FROM eclipse-temurin:21.0.8_9-jre-jammy AS final
+WORKDIR /opt/app
+EXPOSE 8080
+COPY --from=builder /opt/app/target/*.jar /opt/app/*.jar
+ENTRYPOINT ["java", "-jar", "/opt/app/*.jar"]
+```
+
+Notice that this Dockerfile has been split into two stages.
+
+- The first stage remains the same as the previous Dockerfile, providing a Java Development Kit (JDK) environment for building the application. This stage is given the name of `builder`.
+
+- The second stage is a new stage named `final`. It uses a slimmer `eclipse-temurin:21.0.8_9-jre-jammy` image, containing just the Java Runtime Environment (JRE) which is enough for running the compiled application (JAR file).
+
+> NOTE: For production use, it's highly recommended that you produce a custom JRE-like runtime using jlink.
+
+With multi-stage builds, a Docker build uses one base image for compilation, packaging, and unit tests and then a separate image for the application runtime. By separating the build environment from the final runtime environment, you can significantly reduce the image size and increase the security of your final images.
+
+2. Now, rebuild your image and run your ready-to-use production build.
+
+```bash
+$ docker build -t spring-helloworld-builder .
+```
+
+> [!NOTE]
+> In your multi-stage Dockerfile, the `final` stage is the default target for building. You could use `docker build -t spring-helloworld-builder --target builder .` to build only the `builder` stage with the JDK environment.
+
+3. Look at the image size difference by using the docker images command:
+
+```bash
+docker images
+```
+
+Your final image is much less compared to the original build size.
+
+##### Recap
+
+By optimizing each stage and only including what's necessary, you were able to significantly reduce the overall image size. This not only improves performance but also makes your Docker images more lightweight, more secure, and easier to manage.
+
+## Running Containers
+
+### Publishing and exposing ports
+
+#### Intro
+
+<hr style="height:1px; margin:0">
+
+Containers provide isolated processes for each component of your application. Each component - a React frontend, a Python API, and a Postgres database - runs in its own sandbox environment, completely isolated from everything else on your host machine. This isolation is great for security and managing dependencies, but it also means you can’t access them directly. For example, you can’t access the web app in your browser.
+
+That’s where port publishing comes in.
+
+#### Publishing ports
+
+<hr style="height:1px; margin:0">
+
+Publishing a port provides the ability to break through a little bit of networking isolation by setting up a forwarding rule. As an example, you can indicate that requests on your host’s port `8080` should be forwarded to the container’s port `80`. Publishing ports happens during container creation using the `-p` (or `--publish`) flag with `docker run`. The syntax is:
+
+```bash
+$ docker run -d -p HOST_PORT:CONTAINER_PORT nginx
+```
+
+- `HOST_PORT`: The port number on your host machine where you want to receive traffic
+- `CONTAINER_PORT`: The port number within the container that's listening for connections.
+
+For example, to publish the container's port `80` to host port `8080`:
+
+```bash
+$ docker run -d -p 8080:80 nginx
+```
+
+Now, any traffic sent to port `8080` on your host machine will be forwarded to port `80` within the container.
+
+> [!IMPORTANT]
+> When a port is published, it's published to all network interfaces by default. This means any traffic that reaches your machine can access the published application. Be mindful of publishing databases or any sensitive information.
+
+#### Publishing to ephemeral ports
+
+<hr style="height:1px; margin:0">
+
+At times, you can let Docker pick the host port for you. To do so, simply omit the `HOST_PORT` configuration.
+
+For example, the following command will publish the container’s port `80` onto an ephemeral port on the host:
+
+```bash
+$ docker run -p 80 nginx
+```
+
+Once the container is running, running `docker ps` will show you the port that was chosen.
+
+#### Publishing all ports
+
+<hr style="height:1px; margin-top:0">
+
+When creating a container image (usually using Dockerfile), the `EXPOSE` instruction is used to indicate the packaged application will use the specified port. These ports aren't published by default.
+
+With the `-P` or `--publish-all` flag, you can automatically publish all exposed ports to ephemeral ports. This is quite useful when you’re trying to avoid port conflicts in development or testing environments:
+
+```bash
+$ docker run -P nginx
+```
+
+> Note the capital letter 'P'
+
+#### Try it out
+
+<hr style="height:1px; margin-top:0">
+
+In this hands-on guide, you'll learn how to publish container ports using both the `Docker CLI` and `Docker Compose` for deploying a web application.
+
+##### Method-1. Use the Docker CLI
+
+In this step, you will run a container and publish its port using the Docker CLI.
+
+1. Download and install Docker Desktop. Run/open it.
+2. In a terminal, run the following command to start a new container:
+
+```bash
+$ docker run -d -p 8080:80 docker/welcome-to-docker
+```
+
+The first `8080` refers to the `host port`. This is the port on your local machine that will be used to access the application running inside the container.
+
+The second `80` refers to the `container port`. This is the port that the application inside the container listens on for incoming connections.
+
+3. Verify the published port by going to the Containers view of the Docker Desktop Dashboard.
+
+![docker-container](images/docker-container-01.png)
+
+4. Open the website by visiting http://localhost:8080 in your browser.
+
+##### Method-2. Use Docker Compose
+
+This example will launch the same application using Docker Compose:
+
+1. Create a new directory and inside that directory, create a `compose.yaml` file with the following contents:
+
+```yaml
+services:
+  app:
+    image: docker/welcome-to-docker
+    ports:
+      - 8080:80
+```
+
+The `ports` configuration accepts a few different forms of syntax for the port definition. In this case, you’re using the same `HOST_PORT:CONTAINER_PORT` used in the docker run command.
+
+2. Open a terminal and navigate to the directory you created in the previous step.
+
+3. Use the `docker compose up` command to start the application.
+
+4. Open your browser to http://localhost:8080.
+
+> [!NOTE]
+> **Dockerfile vs Docker compose**
+>
+> While `Dockerfile` builds an image, Docker `compose` can either build an image from Dockerfile and run the container or pull an existing image and run the container. In the above example, compose pulled and existing image and ran container
