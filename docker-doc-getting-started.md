@@ -2409,7 +2409,7 @@ In this guide, you learned how easy it is to use Docker Compose to start and sto
 
 The following github repository contains a workshop that containes step-by-step instructions on how to get started with Docker.
 
-[Docker workshop repository]()
+[Docker workshop repository](https://github.com/ttanvirr/docker-workshop-official)
 
 This workshop shows you how to:
 
