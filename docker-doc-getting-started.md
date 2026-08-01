@@ -20,7 +20,46 @@
     - [What is an Image?](#what-is-an-image)
       - [Using Docker Desktop](#method-1-to-search-and-pull-a-container-image-docker-desktop)
       - [Using CLI](#method-2-to-search-and-pull-a-container-image-cli)
+
     - [What is a registry?](#what-is-a-registry)
+      - [Registry vs. repository](#registry-vs-repository)
+      - [Build and Push a Docker image](#build-and-push-a-docker-image-to-a-docker-hub-repository)
+
+    - [What is Docker Compose](#what-is-docker-compose)
+      - [Using Docker Compose](#using-docker-compose)
+
+  - [Building images](#building-images)
+    - [Understanding the image layers](#understanding-image-layers)
+      - [Create new image layers](#create-new-image-layers)
+    - [Writing a Dockerfile](#writing-a-dockerfile)
+      - [Write a Dockerfile to build a Node.js app](#write-a-dockerfile-to-build-a-nodejs-app)
+
+    - [Build, tag, and publish an image](#build-tag-and-publish-an-image)
+      - [Try it out](#try-it-out---build-tag-and-publish-image)
+
+    - [Using the build cache](#using-the-build-cache)
+      - [Try it out](#try-it-out---using-build-cache)
+
+    - [Multi-stage builds](#multi-stage-builds)
+      - [Try it out](#try-it-out---multi-stage-builds)
+
+  - [Running containers](#running-containers)
+    - [Publishing and exposing ports](#publishing-and-exposing-ports)
+      - [Try it out](#try-it-out---publish-container-ports)
+
+    - [Overriding container defaults](#overriding-container-defaults)
+      - [Try it out](#try-it-out---override-container-defaults)
+
+    - [Persisting container data](#persisting-container-data)
+      - [Try it out](#try-it-out---create-and-use-volumes)
+
+    - [Sharing local files with containers](#sharing-local-files-with-containers)
+      - [Try it out](#try-it-out---share-files)
+
+    - [Multi-container application](#multi-container-applications)
+      - [Try it out](#try-it-out---build-multi-container-application)
+
+- [Docker workshop](#docker-workshop)
 
 # Get Docker - Install Docker Desktop on Windows (with wsl2 backend)
 
@@ -1168,7 +1207,7 @@ Within a few seconds, all of the layers for your image will be pushed to the reg
 >
 > Before you're able to push an image to a repository, you will need to be authenticated. To do so, simply use the `docker login` command.
 
-#### Try it out
+#### Try it out - build, tag, and publish image
 
 In this hands-on guide, you will build a simple image using a provided `Dockerfile` and push it to `Docker Hub`
 
@@ -1242,7 +1281,7 @@ In order to maximize cache usage and avoid resource-intensive and time-consuming
 
 When you're writing or editing a Dockerfile, keep an eye out for unnecessary cache misses to ensure that builds run as fast and efficiently as possible.
 
-#### Try it out
+#### Try it out - using build cache
 
 In this hands-on guide, you will learn how to use the `Docker build cache` effectively for a Node.js application.
 
@@ -1368,7 +1407,7 @@ This Dockerfile uses two stages:
 - The build stage uses a base image containing build tools needed to compile your application. It includes commands to install build tools, copy source code, and execute build commands.
 - The final stage uses a smaller base image suitable for running your application. It copies the compiled artifacts (a JAR file, for example) from the build stage. Finally, it defines the runtime configuration (using `CMD` or `ENTRYPOINT`) for starting your application.
 
-#### Try it out
+#### Try it out - multi-stage builds
 
 In this hands-on guide, you'll unlock the power of multi-stage builds to create lean and efficient Docker images for a sample Java application. You'll use a simple “Hello World” Spring Boot-based application built with Maven as your example.
 
@@ -1656,7 +1695,7 @@ $ docker run -P nginx
 
 > Note the capital letter 'P'
 
-#### Try it out
+#### Try it out - publish container ports
 
 <hr style="height:1px; margin-top:0">
 
@@ -1773,7 +1812,7 @@ This command limits container memory usage to 512 MB and defines the CPU quota o
 >
 > You can use the `docker stats` command to monitor the real-time resource usage of running containers.
 
-#### Try it out
+#### Try it out - override container defaults
 
 <hr style="height:1px; margin-top:0">
 
@@ -1946,7 +1985,7 @@ Volumes have their own lifecycle beyond that of containers and can grow quite la
 - `docker volume rm <volume-name-or-id>` - remove a volume (only works when the volume is not attached to any containers)
 - `docker volume prune` - remove all unused (unattached) volumes
 
-#### Try it out
+#### Try it out - create and use volumes
 
 <hr style="height:1px; margin-top:0">
 
@@ -2114,7 +2153,7 @@ With read-write bind mounts, containers can modify or delete mounted files, and 
 >
 > As your codebase grows larger, traditional methods of file sharing like bind mounts may become inefficient or slow, especially in development environments where frequent access to files is necessary. **Synchronized file shares** improve bind mount performance by leveraging synchronized filesystem caches. This optimization ensures that file access between the host and virtual machine (VM) is fast and efficient.
 
-#### Try it out
+#### Try it out - share files
 
 <hr style="height:1px; margin-top:0" />
 
@@ -2248,7 +2287,7 @@ That's where Docker Compose comes to the rescue.
 
 By leveraging Docker Compose for running multi-container setups, you can build complex applications with modularity, scalability, and consistency at their core.
 
-#### Try it out
+#### Try it out - build multi-container application
 
 <hr style="height:1px; margin-top:0" />
 
