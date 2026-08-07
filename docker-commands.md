@@ -81,11 +81,13 @@ docker pull <IMAGE_NAME>
 
 ## 1.7. List the image's layers:
 
-```bash
-docker image history <IMAGE_NAME>
-```
+    ```bash
+    docker image history <IMAGE_NAME>
+    ```
 
-> Example IMAGE_NAME: docker/welcome-to-docker
+    > Example IMAGE_NAME: docker/welcome-to-docker
+
+[⬆️Return to Table of contents](#table-of-contents)
 
 # 2. Docker container
 
@@ -162,6 +164,8 @@ $ docker rm -f <container_id_or_name>
     $ docker logs <container-id>
   ```
 
+[⬆️Return to Table of contents](#table-of-contents)
+
 # 3. Docker compose
 
 ## 3.1. Use docker compose to start an application
@@ -184,3 +188,5 @@ docker compose down
 > ```bash
 > docker compose down --volumes
 > ```
+
+[⬆️Return to Table of contents](#table-of-contents)
