@@ -1,4 +1,3 @@
-
 # Docker image
 
 ## Build a docker image repository locally
@@ -123,12 +122,24 @@ $ docker rm -f <container_id_or_name>
   ```
 
   If the container doesn't have `bash` (common with Alpine-based images), use `sh` instead:
-  
+
   ```bash
   $ docker exec -it <CONTAINER_ID> sh
   ```
 
 - Then run `ls` to view filesystem inside the container
+
+## View container logs
+
+- Show logs and keep following on terminal
+  ```bash
+  $ docker logs -f <container-id>
+  ```
+  Press `Ctrl`+`C` to exit.
+- Show logs but don't follow
+  ```bash
+    $ docker logs <container-id>
+  ```
 
 # Docker compose
 
