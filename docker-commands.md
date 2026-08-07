@@ -1,3 +1,6 @@
+
+# Docker image
+
 ## Build a docker image repository locally
 
 1. Navigate into the project directory.
@@ -64,6 +67,8 @@ docker image history <IMAGE_NAME>
 
 > Example IMAGE_NAME: docker/welcome-to-docker
 
+# Docker container
+
 ## Pull an Image and Run Docker Container (together)
 
 ```bash
@@ -79,13 +84,13 @@ $ docker run -d --name=CONTAINER_NAME -p 8080:80 IMAGE_NAME
 - To see only the running containers
 
 ```bash
-docker ps
+$ docker ps
 ```
 
 - To see all containers including running and stopped
 
 ```bash
-docker ps -a
+$ docker ps -a
 ```
 
 > [!TIP]
@@ -99,15 +104,33 @@ docker ps -a
 1. Run `docker ps` to get the ID of the container
 2. Provide the container ID or name to the `docker stop` command:
 
-```
-docker stop <container_id>
+```bash
+$ docker stop <container_id>
 ```
 
 ## Delete a container
 
+```bash
+$ docker rm -f <container_id_or_name>
 ```
-docker rm -f <container_id_or_name>
-```
+
+## View filesystem inside a container
+
+- Open a shell inside a running container, use docker exec
+
+  ```bash
+  $ docker exec -it <CONTAINER_ID> bash
+  ```
+
+  If the container doesn't have `bash` (common with Alpine-based images), use `sh` instead:
+  
+  ```bash
+  $ docker exec -it <CONTAINER_ID> sh
+  ```
+
+- Then run `ls` to view filesystem inside the container
+
+# Docker compose
 
 ## Use docker compose to start an application
 
