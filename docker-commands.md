@@ -1,6 +1,27 @@
-# Docker image
+# Table of Contents <!-- omit in toc -->
 
-## Build a docker image repository locally
+- [1. Docker image](#1-docker-image)
+  - [1.1. Build a docker image repository locally](#11-build-a-docker-image-repository-locally)
+  - [1.2. Verify if the image exists locally](#12-verify-if-the-image-exists-locally)
+  - [1.3. Tag a built Image](#13-tag-a-built-image)
+  - [1.4. Push the image to Docker Hub](#14-push-the-image-to-docker-hub)
+  - [1.5. Search container image](#15-search-container-image)
+  - [1.6. Pull container image](#16-pull-container-image)
+  - [1.7. List the image's layers:](#17-list-the-images-layers)
+- [2. Docker container](#2-docker-container)
+  - [2.1. Pull an Image and Run Docker Container (together)](#21-pull-an-image-and-run-docker-container-together)
+  - [2.2. View your running containers](#22-view-your-running-containers)
+  - [2.3. Stop your container](#23-stop-your-container)
+  - [2.4. Delete a container](#24-delete-a-container)
+  - [2.5. View filesystem inside a container](#25-view-filesystem-inside-a-container)
+  - [2.6. View container logs](#26-view-container-logs)
+- [3. Docker compose](#3-docker-compose)
+  - [3.1. Use docker compose to start an application](#31-use-docker-compose-to-start-an-application)
+  - [3.2. Tear down Compose stack](#32-tear-down-compose-stack)
+
+# 1. Docker image
+
+## 1.1. Build a docker image repository locally
 
 1. Navigate into the project directory.
 2. Build the project by running the following command, swapping out `DOCKER_USERNAME` with your username.
@@ -12,13 +33,13 @@ docker build -t DOCKER_USERNAME/getting-started-todo-app .
 > [!NOTE]
 > Must have dockerfile
 
-## Verify if the image exists locally
+## 1.2. Verify if the image exists locally
 
 ```bash
 docker image ls
 ```
 
-## Tag a built Image
+## 1.3. Tag a built Image
 
 Tag allows to label and version your image.
 
@@ -34,7 +55,7 @@ docker build -t DOCKER_USERNAME/docker-quickstart:1.0 .
 docker tag DOCKER_USERNAME/docker-quickstart:1.0 DOCKER_USERNAME/docker-quickstart:latest
 ```
 
-## Push the image to Docker Hub
+## 1.4. Push the image to Docker Hub
 
 Use the `docker push` command. Be sure to replace `DOCKER_USERNAME` with your username:
 
@@ -42,7 +63,7 @@ Use the `docker push` command. Be sure to replace `DOCKER_USERNAME` with your us
 docker push DOCKER_USERNAME/getting-started-todo-app
 ```
 
-## Search container image
+## 1.5. Search container image
 
 ```bash
 docker search <IMAGE_NAME>
@@ -50,7 +71,7 @@ docker search <IMAGE_NAME>
 
 > Example IMAGE_NAME: docker/welcome-to-docker
 
-## Pull container image
+## 1.6. Pull container image
 
 ```bash
 docker pull <IMAGE_NAME>
@@ -58,7 +79,7 @@ docker pull <IMAGE_NAME>
 
 > Example IMAGE_NAME: docker/welcome-to-docker
 
-## List the image's layers:
+## 1.7. List the image's layers:
 
 ```bash
 docker image history <IMAGE_NAME>
@@ -66,9 +87,9 @@ docker image history <IMAGE_NAME>
 
 > Example IMAGE_NAME: docker/welcome-to-docker
 
-# Docker container
+# 2. Docker container
 
-## Pull an Image and Run Docker Container (together)
+## 2.1. Pull an Image and Run Docker Container (together)
 
 ```bash
 $ docker run -d --name=CONTAINER_NAME -p 8080:80 IMAGE_NAME
@@ -78,7 +99,7 @@ $ docker run -d --name=CONTAINER_NAME -p 8080:80 IMAGE_NAME
 - example container name: `welcome-to-docker` (arbitrary)
 - `-p` flag for port. `8080` is any available `host port` and `80` is a fixed `container port`
 
-## View your running containers
+## 2.2. View your running containers
 
 - To see only the running containers
 
@@ -98,7 +119,7 @@ $ docker ps -a
 > - install `jq` running `sudo apt install jq`
 > - run `docker ps --format json | jq '{ID, Names, Image, Ports, Status}'`
 
-## Stop your container
+## 2.3. Stop your container
 
 1. Run `docker ps` to get the ID of the container
 2. Provide the container ID or name to the `docker stop` command:
@@ -107,13 +128,13 @@ $ docker ps -a
 $ docker stop <container_id>
 ```
 
-## Delete a container
+## 2.4. Delete a container
 
 ```bash
 $ docker rm -f <container_id_or_name>
 ```
 
-## View filesystem inside a container
+## 2.5. View filesystem inside a container
 
 - Open a shell inside a running container, use docker exec
 
@@ -129,7 +150,7 @@ $ docker rm -f <container_id_or_name>
 
 - Then run `ls` to view filesystem inside the container
 
-## View container logs
+## 2.6. View container logs
 
 - Show logs and keep following on terminal
   ```bash
@@ -141,15 +162,15 @@ $ docker rm -f <container_id_or_name>
     $ docker logs <container-id>
   ```
 
-# Docker compose
+# 3. Docker compose
 
-## Use docker compose to start an application
+## 3.1. Use docker compose to start an application
 
 ```bash
 docker compose up -d --build
 ```
 
-## Tear down Compose stack
+## 3.2. Tear down Compose stack
 
 ```bash
 docker compose down
