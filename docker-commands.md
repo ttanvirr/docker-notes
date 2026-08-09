@@ -15,6 +15,7 @@
   - [2.4. Delete a container](#24-delete-a-container)
   - [2.5. View filesystem inside a container](#25-view-filesystem-inside-a-container)
   - [2.6. View container logs](#26-view-container-logs)
+  - [2.7. Comprehensive commad to run a container](#27-comprehensive-commad-to-run-a-container)
 - [3. Docker compose](#3-docker-compose)
   - [3.1. Use docker compose to start an application](#31-use-docker-compose-to-start-an-application)
   - [3.2. Tear down Compose stack](#32-tear-down-compose-stack)
@@ -163,6 +164,27 @@ $ docker rm -f <container_id_or_name>
   ```bash
     $ docker logs <container-id>
   ```
+
+## 2.7. Comprehensive commad to run a container
+
+```bash
+$ docker run -dp 127.0.0.1:3000:3000 \
+-w /app -v ".:/app" \
+--network todo-app \
+-e MYSQL_HOST=mysql \
+-e MYSQL_USER=root \
+-e MYSQL_PASSWORD=secret \
+-e MYSQL_DB=todos \
+node:24-alpine \
+sh -c "npm install && npm run dev"
+```
+
+- `-dp` - detatch mode with port.
+- `-w` - working directory
+- `-v` - volume ("HOST_DIRECTORY:WORKING_DIRECTORY")
+- `--network` - network name to attach with.
+- `-e` - environment variable
+- `sh -c` - shell command
 
 [⬆️Return to Table of contents](#table-of-contents)
 
