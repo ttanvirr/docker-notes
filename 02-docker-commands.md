@@ -82,11 +82,17 @@ docker pull <IMAGE_NAME>
 
 ## 1.7. List the image's layers:
 
-    ```bash
-    docker image history <IMAGE_NAME>
-    ```
+```bash
+docker image history <IMAGE_NAME>
+```
 
-    > Example IMAGE_NAME: docker/welcome-to-docker
+> Example IMAGE_NAME: docker/welcome-to-docker
+
+Several of the lines may get truncated. Add `--no-trunc` flag to get the full output.
+
+```bash
+$ docker image history --no-trunc <IMAGE_NAME>
+```
 
 [⬆️Return to Table of contents](#table-of-contents)
 
